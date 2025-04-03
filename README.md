@@ -38,8 +38,7 @@ SecSuite is a monitoring tool designed to collect system metrics and track succe
 
    Open your terminal and run:
    ```bash
-   mkdir -p /opt/secsuite/
-   cd /opt/secsuite/
+   cd /opt/
    git clone https://github.com/ghostinthecable/secsuite
    ```
 
