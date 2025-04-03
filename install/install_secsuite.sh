@@ -133,14 +133,8 @@ echo ""
 
 echo "Checking for Python MySQL connector (mysql-connector-python)..."
 if ! python3 -c "import mysql.connector" 2>/dev/null; then
-  echo "mysql-connector-python not found. Installing via pip..."
-  if command -v pip3 >/dev/null 2>&1; then
-    pip3 install mysql-connector-python
-  else
-    echo "pip3 not found. Attempting to install pip3..."
-    apt update && apt install -y python3-pip
-    pip3 install mysql-connector-python
-  fi
+  echo "mysql-connector-python not found. Installing..."
+  sudo apt install python3-mysql.connector -y
 else
   echo "mysql-connector-python already installed."
 fi
