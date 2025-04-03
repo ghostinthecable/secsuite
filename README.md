@@ -25,8 +25,6 @@ SecSuite is a monitoring tool designed to collect system metrics and track succe
 
 - **Operating System:** A Linux distribution with access to `/proc` and `/var/log/auth.log`
 - **Python:** Version 3.x
-- **MySQL:** A MySQL database with a pre-created `secsuite` database and the required table schema
-- **Python Module:** Install `mysql-connector-python` (`pip install mysql-connector-python`)
 - **Git:** For cloning the repository
 
 ### Installation Steps
