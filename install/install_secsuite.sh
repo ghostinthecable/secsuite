@@ -2,8 +2,8 @@
 #
 # SecSuite Installation Script
 #
-# This script preps the system by creating working directories, setting up default configuration 
-# and credential files, and creating a systemd service for SecSuite.
+# This script preps the system by creating the necessary directories, setting up default
+# configuration and credential files, and creating a systemd service for SecSuite.
 #
 # It assumes that the repository has been cloned into /opt/secsuite/.
 #
@@ -12,6 +12,7 @@
 #   git clone https://github.com/ghostinthecable/secsuite
 #   cd install ; bash install_secsuite.sh
 #
+
 # Ensure the script is run as root.
 if [ "$EUID" -ne 0 ]; then
   echo "--------------------------------------------------"
@@ -63,32 +64,85 @@ else
 fi
 echo ""
 
-# Create or prompt for default db.conf.
+echo "Setting up database configuration..."
 DB_CONF_FILE="$CONF_DIR/db.conf"
+INITIALISE_DB=false
+
 if [ -f "$DB_CONF_FILE" ]; then
-  read -p "$DB_CONF_FILE exists. Overwrite with default credentials? [y/N]: " choice
+  read -p "$DB_CONF_FILE exists. Overwrite with new credentials? [y/N]: " choice
   case "$choice" in
     y|Y )
+      read -p "Enter DB username: " DB_USER
+      read -s -p "Enter DB password: " DB_PASS; echo
+      DB_HOST="localhost"
+      DB_NAME="secsuite"
       cat <<EOF > "$DB_CONF_FILE"
-user=your_db_username
-password=your_db_password
-host=localhost
-database=secsuite
+user=$DB_USER
+password=$DB_PASS
+host=$DB_HOST
+database=$DB_NAME
 EOF
-      echo "Default db.conf overwritten. Please edit $DB_CONF_FILE with your actual credentials."
+      echo "Credentials saved to $DB_CONF_FILE."
+      INITIALISE_DB=true
       ;;
     * )
       echo "Keeping existing $DB_CONF_FILE."
+      read -p "Would you like to refresh the database schema from db/secsuite.sql? [y/N]: " refresh_choice
+      [[ "$refresh_choice" =~ ^[yY]$ ]] && INITIALISE_DB=true
       ;;
   esac
 else
+  read -p "Enter DB username: " DB_USER
+  read -s -p "Enter DB password: " DB_PASS; echo
+  DB_HOST="localhost"
+  DB_NAME="secsuite"
   cat <<EOF > "$DB_CONF_FILE"
-user=your_db_username
-password=your_db_password
-host=localhost
-database=secsuite
+user=$DB_USER
+password=$DB_PASS
+host=$DB_HOST
+database=$DB_NAME
 EOF
-  echo "Default db.conf created at: $DB_CONF_FILE. Please edit it with your actual credentials."
+  echo "Credentials saved to $DB_CONF_FILE."
+  INITIALISE_DB=true
+fi
+
+echo ""
+
+# Initialise the database schema if requested.
+if $INITIALISE_DB ; then
+  echo "Initialising database schema from db/secsuite.sql..."
+  # Extract credentials from the configuration file.
+  DB_USER=$(grep '^user=' "$DB_CONF_FILE" | cut -d '=' -f2)
+  DB_PASS=$(grep '^password=' "$DB_CONF_FILE" | cut -d '=' -f2)
+  DB_NAME=$(grep '^database=' "$DB_CONF_FILE" | cut -d '=' -f2)
+
+  if [ ! -f "$BASE_DIR/db/secsuite.sql" ]; then
+    echo "Error: Database schema file not found at $BASE_DIR/db/secsuite.sql."
+  else
+    mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < "$BASE_DIR/db/secsuite.sql" 2>/dev/null
+
+    if [ $? -eq 0 ]; then
+      echo "Database initialised successfully."
+    else
+      echo "Error: Failed to initialise the database. Please check your credentials or the schema file."
+    fi
+  fi
+fi
+
+echo ""
+
+echo "Checking for Python MySQL connector (mysql-connector-python)..."
+if ! python3 -c "import mysql.connector" 2>/dev/null; then
+  echo "mysql-connector-python not found. Installing via pip..."
+  if command -v pip3 >/dev/null 2>&1; then
+    pip3 install mysql-connector-python
+  else
+    echo "pip3 not found. Attempting to install pip3..."
+    apt update && apt install -y python3-pip
+    pip3 install mysql-connector-python
+  fi
+else
+  echo "mysql-connector-python already installed."
 fi
 echo ""
 
