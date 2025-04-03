@@ -1,5 +1,10 @@
 # SecSuite
 
+<p align="center">
+  <img src="https://orion-security.net/images/secsuite.png" alt="SecSuite Logo" width="400"/>
+</p>
+
+
 SecSuite is a monitoring tool designed to collect system metrics and track successful SSH login events. It gathers data such as CPU usage, memory usage, disk usage, load average, and network latency, while also monitoring successful SSH logins. All collected information is stored in a MySQL database for further analysis.
 
 ## Features
